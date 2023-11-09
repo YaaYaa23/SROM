@@ -161,7 +161,51 @@ def lcm(a, b):
     lcm = hex(lcm)
     return lcm
 
+def calc_mu(n):
+    s = bit_length(n)
+    c = n[s]
+    res = 0
+    while c:
+        c = c >> 1
+        res += 1
+    k = s * 16 + res
+    #print("k",k)
+    b = 2 ** (2*k)
+    #print("b",b)
+    n = int(convert_to_hex(n).lstrip('0x'), 16)
+    mu = b // n
+    #print(mu)
+    mu = create_num_from_hex(hex(mu).lstrip('0x'))
+    return mu, k
+
+def kill_last_digits(x, k, a):
+    b = k + a
+    #print(x)
+    x = int(convert_to_hex(x), 16)
+    q = x // 2**b
+    q = create_num_from_hex(hex(q).lstrip('0x'))
+    return q
+
+def barrett_reduction(x, n):
+    res = 0
+    mu, k = calc_mu(n)
+    #k = calc_mu(n)[1]
+    q = kill_last_digits(x, k, -1)
+    #print("before",q)
+    q = long_mul(q, mu)
+    #print(q)
+    q = kill_last_digits(q, k, 1)
+    q = long_mul(q, n)
+    r = long_sub(x, q)
+    while compare(r, n) >= 0:
+        r = long_sub(r, n)
+        res = res + 1
+    #print(res)
+    return r
+
 C = euclidean_algorithm(A, B)
 print("\nAgcdB=", convert_to_hex(C).lstrip('0'))
 C = lcm(A, B)
 print("\nAlcmB=", C.lstrip('0x'))#convert_to_hex(C).lstrip('0'))
+D = barrett_reduction(A, B)
+print("\nAmodB=", convert_to_hex(D).lstrip('0'))

@@ -1,6 +1,4 @@
-A = 'd0a166bef0f8cd687a755ce64c4736e2621fe749af3c4170354c55a2728037612cf3b134550036e2de888e049ee782ab82ab99ba3442a3b4b8eb21c9f79778cff4ce0c2109a02fd18163e5155146d156b92176c03ba2b87ee53ba78217529616eea6e8432b0f736b09e30e89f3ceeaea11fb94dacd994e1fd8a6059cc14a58b2'
-mod = 'cbe75e23d145c3dc78d76739b63d337cc33268e08ce4ea7319c38b7d057b1747d59010759f3b015858dc5a9d05ddbbd3ef41a368ba1ca6d8a6d967f2fed6b7033e7f56d46beae7c259cce870e0879f49849c956b6b6810be90d0c50c54daaef41b2b1c6e3c7b2ed35da549a7c95fd551841ea90e4196e8272b42ea3dba7cdcef'
-B = 'a9694988354c96530b1a58f8ad59569af0d402ab53d275ddb5cb393f47c6b098977f181ab889d3c5ceb96b9f3c0702c947856481d654c691d0f736fa2ef7aa0fbec62224e467f741e53edf8c8fe82c13fb90ac66eee37a975f16dd9faafd213c538711bbea34fbfd8b4330e17409d5c35313743d5dea5a82d34d99a10ac9223b'
+import time
 
 
 def create_num_from_hex(hex):
@@ -161,51 +159,147 @@ def lcm(a, b):
     lcm = hex(lcm)
     return lcm
 
-def calc_mu(n):
-    s = bit_length(n)
-    c = n[s]
-    res = 0
-    while c:
-        c = c >> 1
-        res += 1
-    k = s * 16 + res
-    #print("k",k)
-    b = 2 ** (2*k)
-    #print("b",b)
-    n = int(convert_to_hex(n).lstrip('0x'), 16)
-    mu = b // n
-    #print(mu)
+
+
+def LongPowerWindow(base, exp):
+    c = [1] + [0] * 255
+    t = convert_to_bin(exp)[::-1]
+    for i in range(bit_length(t), -1, -1):
+        if t[i] == '1':
+            c = long_mul(c, base)
+        if i != 0:
+            c = long_mul(c, c)
+    return c
+
+
+def calc(mod):
+    k = bit_length(mod) + 1
+    mod = int(convert_to_hex(mod).lstrip('0x'), 16)
+    mu = ((2**16) ** (2*k)) // mod
     mu = create_num_from_hex(hex(mu).lstrip('0x'))
     return mu, k
+    
+def kill_last(A, k):
+    A = A[k:]
+    A.extend([0 for i in range(k)])
+    return A
 
-def kill_last_digits(x, k, a):
-    b = k + a
-    #print(x)
-    x = int(convert_to_hex(x), 16)
-    q = x // 2**b
-    q = create_num_from_hex(hex(q).lstrip('0x'))
-    return q
 
-def barrett_reduction(x, n):
+
+def long_sub_abs(x, q):
+    if compare(x, q) >= 0:
+        return long_sub(x,q), 0
+    return long_sub(q,x), 1
+
+def barrett_reduction(x, n, mu, k):
     res = 0
-    mu, k = calc_mu(n)
+    #mu, k = calc_mu(n)
     #k = calc_mu(n)[1]
-    q = kill_last_digits(x, k, -1)
+    q = kill_last(x, k - 1)
     #print("before",q)
     q = long_mul(q, mu)
     #print(q)
-    q = kill_last_digits(q, k, 1)
-    q = long_mul(q, n)
-    r = long_sub(x, q)
+    q = kill_last(q, k + 1)
+    q = long_mul(q, n) 
+    r, sign = long_sub_abs(x, q)
+    #print(convert_to_hex(x).lstrip('0x'))
+    #print(convert_to_hex(n).lstrip('0x'))
+    if sign == 1:
+        #print(convert_to_hex(r))
+        #print("hello")
+        return long_sub(n,r)
     while compare(r, n) >= 0:
         r = long_sub(r, n)
         res = res + 1
     #print(res)
     return r
 
+def long_add_mod(a, b, mod, mu, k):
+    result = long_add(a, b)
+    return barrett_reduction(result, mod, mu, k)
+
+def long_sub_mod(a, b, mod, mu, k):
+    result = long_sub(a, b)
+    return barrett_reduction(result, mod, mu, k)
+
+def long_mul_mod(a, b, mod, mu, k):
+    result = long_mul(a, b)
+    #print(result)
+    return barrett_reduction(result, mod, mu, k)
+
+def long_mod_power_barrett( a, b, mod, mu, k):
+    c = [1] + [0] * 255
+    #t = convert_to_bin(b)[::-1]
+    t = bin(int(b,16)).lstrip('0b')
+    #print(t)
+    #print(len(t))
+    for i in range(len(t)-1, -1, -1):
+        #print("i",i)
+        if t[i] == '1':
+            c = long_mul_mod(c, a, mod, mu, k)
+            #print("c0",c)
+        a = long_mul_mod( a, a, mod, mu, k)
+        #print("c1",c)
+        #if i != 0:
+            #c = long_mul_mod(c, c, mod)
+    return c
+
+A = 'd0a166bef0f8cd687a755ce64c4736e2621fe749af3c4170354c55a2728037612cf3b134550036e2de888e049ee782ab82ab99ba3442a3b4b8eb21c9f79778cff4ce0c2109a02fd18163e5155146d156b92176c03ba2b87ee53ba78217529616eea6e8432b0f736b09e30e89f3ceeaea11fb94dacd994e1fd8a6059cc14a58b2'
+mod = 'cbe75e23d145c3dc78d76739b63d337cc33268e08ce4ea7319c38b7d057b1747d59010759f3b015858dc5a9d05ddbbd3ef41a368ba1ca6d8a6d967f2fed6b7033e7f56d46beae7c259cce870e0879f49849c956b6b6810be90d0c50c54daaef41b2b1c6e3c7b2ed35da549a7c95fd551841ea90e4196e8272b42ea3dba7cdcef'
+B = 'a9694988354c96530b1a58f8ad59569af0d402ab53d275ddb5cb393f47c6b098977f181ab889d3c5ceb96b9f3c0702c947856481d654c691d0f736fa2ef7aa0fbec62224e467f741e53edf8c8fe82c13fb90ac66eee37a975f16dd9faafd213c538711bbea34fbfd8b4330e17409d5c35313743d5dea5a82d34d99a10ac9223b'
+E = '3A7EF2554E8940FA9B93B2A5E822CC7BB262F4A14159E4318CAE3ABF5AEB1022EC6D01DEFAB48B528868679D649B445A753684C13F6C3ADBAB059D635A2882090FC166EA9F0AAACD16A062149E4A0952F7FAAB14A0E9D3CB0BE9200DBD3B0342496421826919148E617AF1DB66978B1FCD28F8408506B79979CCBCC7F7E5FDE7'
+F = 'a9694988354c96530b1a58f8ad59569af0d402ab53d275ddb5cb393f47c6b098977f181ab889d3c5ceb96b9f3c0702c947856481d654c691d0f736fa2ef7aa0fbec62224e467f741e53edf8c8fe82c13fb90ac66eee37a975f16dd9faafd213c538711bbea34fbfd8b4330e17409d5c35313743d5dea5a82d34d99a10ac9223b'
+
+A = create_num_from_hex(A)
+B = create_num_from_hex(B)
+mod = create_num_from_hex(mod)
+E = create_num_from_hex(E)
+mu, k = calc(mod)
 C = euclidean_algorithm(A, B)
 print("\nAgcdB=", convert_to_hex(C).lstrip('0'))
 C = lcm(A, B)
 print("\nAlcmB=", C.lstrip('0x'))#convert_to_hex(C).lstrip('0'))
-D = barrett_reduction(A, B)
+D = barrett_reduction(A, B, mu, k)
 print("\nAmodB=", convert_to_hex(D).lstrip('0'))
+D = long_add_mod(A, B, mod, mu, k)
+print("\nA+BmodA=", convert_to_hex(D).lstrip('0'))
+D = long_sub_mod(A, B, mod, mu, k)
+print("\nA-BmodA=", convert_to_hex(D).lstrip('0'))
+D = long_mul_mod(A, B, mod, mu, k)
+print("\nA*BmodM=", convert_to_hex(D).lstrip('0'))
+start = time.time()
+D = long_mod_power_barrett(A, F, mod, mu, k)
+print("\n1A**BmodM=", convert_to_hex(D).lstrip('0'))
+end = time.time()
+execution_time = end - start
+print(f"1Час виконання функції: {execution_time} секунд")
+
+
+print('Б1):')
+res1 = long_mul_mod(long_add_mod(A, B, mod, mu, k), E, mod, mu, k)
+print('(a+b)*с (mod n) = ', convert_to_hex(res1).lstrip('0'))
+res2 = long_mul_mod(E, long_add_mod(A, B, mod, mu, k), mod, mu, k)
+print('c*(a+b) (mod n) = ', convert_to_hex(res2).lstrip('0'))
+res3 = long_add_mod(long_mul_mod(A, E, mod, mu, k), long_mul_mod(B, E, mod, mu, k), mod, mu, k)
+print('a*c + b*c (mod n) = ', convert_to_hex(res3).lstrip('0'))
+
+if res1 == res2 and res2 == res3:
+    print('\nВиконується')
+else:
+    print('\nНе виконується')
+
+print('Б2):')
+N = '65'
+N = create_num_from_hex(N)
+res4 = long_mul_mod(N, A, mod, mu, k)
+print('n*a modm) = ', convert_to_hex(res3).lstrip('0'))
+res5 = '0'
+res5 = create_num_from_hex(res5)
+for i in range(101):
+    res5 = long_add_mod(res5, A, mod, mu, k)
+    # print('res5 = ', res5)
+print('(a+...+a)modm) = ', convert_to_hex(res3).lstrip('0'))
+if res4 == res5:
+    print('\nВиконується')
+else:
+    print('\nНе виконується')

@@ -120,3 +120,79 @@ def inverse(variable):
         result = mod_pol(mull_pol(result, variable))
     return mod_pol(sqr_pol(result))
 
+def trace(variable):
+    result = variable
+    for i in range(0, 191 - 1):
+        variable = mod_pol(sqr_pol(variable))
+        result = mod_pol(add_pol(result, variable))
+
+    return result
+
+#A = '100101010101010101'
+A = '10101101010101111010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101'
+#B = '1010101011001'
+B = '01010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010'
+#C = '10101010000110101'
+C = '01010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010'
+
+A = num_arr(A)
+B = num_arr(B)
+C = num_arr(C)
+
+
+print('Пункт А:\n')
+res = num_str(add_pol(A, B))
+print('\nA + B = ', res)
+res = num_str(sub_pol(A, B))
+print('\nA - B = ', res)
+res = num_str(mull_pol(A, B))
+print('\nA * B = ', res)
+q, r = div_pol(A, B)
+print('\nA // B = ', num_str(q))
+print('\nA % B = ', num_str(r))
+res = num_str(sqr_pol(A))
+print('\nA^2 = ', res)
+res = num_str(pow_pol(A, C))
+print('\nA^C = ', res)
+res = num_str(inverse(A))
+print('\nA^-1 = ', res)
+res = num_str(trace(A))
+print('\ntrace(A) = ', res)
+res = num_str(trace(B))
+print('\ntrace(B) = ', res)
+
+
+
+
+
+print('Пункт Б):\n')
+res1 = num_str(mull_pol(add_pol(A, B), C))
+print('(a+b)*с = ', res1)
+res2 = num_str(add_pol(mull_pol(A, C), mull_pol(B, C)))
+print('(a*с + c*b) = ', res2)
+if res1 == res2:
+    print('\nВиконується\n')
+else:
+    print('Помилка')
+
+
+
+
+
+print('\nДодавання:')
+cProfile.run('add_pol(A, B)')
+print('\nВіднімання:')
+cProfile.run('sub_pol(A, B)')
+print('\nМноження:')
+cProfile.run('mull_pol(A, B)')
+print('\nДілення:')
+cProfile.run('div_pol(A, B)')
+print('\nСлід:')
+cProfile.run('trace(A)')
+print('\nПіднесення до квадрату:')
+cProfile.run('sqr_pol(A)')
+print('\nПіднесення до степення:')
+cProfile.run('pow_pol(A, C)')
+print('\nЗнаходження оберненого:')
+cProfile.run('inverse(A)')
+print('\n')

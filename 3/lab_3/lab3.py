@@ -101,3 +101,16 @@ def cmp(A, B):
 def append_null(array, k):
     return [0] * k + array
 
+def sqr_pol(variable):
+    return mull_pol(variable, variable)
+
+def pow_pol(variable, C):
+    result = [0] * len(C)
+    result[0] = 1
+    for exp in C:
+        if exp == 1:
+            result = mull_pol(result, variable)
+        variable = sqr_pol(variable)
+    return result
+
+

@@ -113,4 +113,10 @@ def pow_pol(variable, C):
         variable = sqr_pol(variable)
     return result
 
+def inverse(variable):
+    result = variable
+    for _ in range(0, 191 - 2):
+        variable = mod_pol(sqr_pol(variable))
+        result = mod_pol(mull_pol(result, variable))
+    return mod_pol(sqr_pol(result))
 

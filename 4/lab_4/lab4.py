@@ -66,3 +66,11 @@ def mull_pol(pol1, pol2):
         res.append(pol1_matr[0])
 
     return res
+
+def trace(pol):
+    result = 0
+    for i in pol:
+        result += i
+
+    result %= 2
+    return result

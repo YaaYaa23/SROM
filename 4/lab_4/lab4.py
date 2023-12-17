@@ -26,3 +26,43 @@ def add_pol(A, B):
     A, B = equal_length(A, B)
     result = [(a + b) % 2 for a, b in zip(A, B)]
     return result
+
+def create_matrix(m):
+    result = []
+    p = 2 * m + 1
+
+    for i in range(m):
+        result.append([1 if (2 ** i + 2 ** j) % p == 1 or
+                           (2 ** i - 2 ** j) % p == 1 or
+                           (-2 ** i + 2 ** j) % p == 1 or
+                           (-2 ** i - 2 ** j) % p == 1 else 0
+                       for j in range(m)])
+
+    return result
+
+def mull_matrix(pol1, pol2):
+    pol21 = len(pol2) if isinstance(pol2[0], list) else 1
+    pol11 = len(pol1)
+    res = []
+    for i in range(pol21):
+        total_sum = 0
+        for j in range(pol11):
+            if pol21 == 1:
+                total_sum += pol1[j] * pol2[j]
+            else:
+                total_sum += pol1[j] * pol2[i][j]
+        res.append(total_sum % 2)
+
+    return res
+
+def mull_pol(pol1, pol2):
+    matr = create_matrix(191)
+    res = []
+    for i in range(191):
+        pol1i = move_left(pol1.copy(), i)
+        pol1_matr = mull_matrix(pol1i, matr)
+        pol2i = move_left(pol2.copy(), i)
+        pol1_matr = mull_matrix(pol1_matr, pol2i)
+        res.append(pol1_matr[0])
+
+    return res

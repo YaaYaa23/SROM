@@ -55,6 +55,23 @@ def mull_matrix(pol1, pol2):
 
     return res
 
+def mull_matrix1(pol1, pol2):
+    pol21 = len(pol2) if isinstance(pol2[0], list) else 1
+    pol11 = len(pol1)
+    res = [0] * pol21
+
+    for i in range(pol11):
+        factor = pol1[i]
+        if factor != 0:
+            if pol21 == 1:
+                for j in range(pol21):
+                    res[j] ^= pol2[i][j]  
+            else:
+                for j in range(pol21):
+                    res[j] ^= factor & pol2[i][j]
+
+    return res
+
 def mull_pol(pol1, pol2):
     matr = create_matrix(191)
     res = []
@@ -74,3 +91,32 @@ def trace(pol):
 
     result %= 2
     return result
+
+def sqr(pol):
+    s = move_right(pol, 1)
+    return s
+
+def pow_pol(pol, pow):
+    result = [1]*len(pol)
+    for i in range(len(pow)-1, -1, -1):
+        if pow[i] == 1:
+            result = mull_pol(result, pol)
+        pol = sqr(pol)
+        #print(i)
+    # print('result = ', result)
+    return result
+
+def inverse(pol, m):
+    result = pol.copy()
+    k = 1
+    print(len(m))
+    for i in range(1,len(m)):
+        result1 = result.copy()
+        result = move_right(result, k)
+        result = mull_pol(result, result1)
+        k = k*2
+        if m[i] == 1:
+            result = mull_pol(pol, sqr(result))
+            k = k + 1
+
+    return sqr(result)
